@@ -340,10 +340,69 @@ function renderProgress(){let attempts=state.subjects||{},names=Object.keys(SUBJ
 function renderTasks(){let list=state.tasks||[];$("taskCount").textContent=list.filter(t=>!t.done).length+" remaining";$("plannerTasks").innerHTML=list.length?list.map(t=>`<div class="task ${t.done?"done":""}"><input type="checkbox" data-task-done="${t.id}" ${t.done?"checked":""}><div class="task-main"><b>${esc(t.title)}</b><span>${esc(t.subject)}${t.date?" · "+esc(t.date):""}</span></div><button class="remove-row" data-task-remove="${t.id}">×</button></div>`).join(""):'<div class="empty-leader">No tasks yet. Add one small next step.</div>';bindTaskCheckboxes();document.querySelectorAll("[data-task-remove]").forEach(b=>b.onclick=()=>{state.tasks=state.tasks.filter(t=>t.id!==+b.dataset.taskRemove);saveState();renderTasks()})}
 function bindTaskCheckboxes(){document.querySelectorAll("[data-task-done]").forEach(b=>b.onchange=()=>{let task=state.tasks.find(t=>t.id===+b.dataset.taskDone);if(task)task.done=b.checked;saveState();renderTasks()})}
 $("addTask").onclick=()=>$("taskTitle").focus();$("saveTask").onclick=()=>{let title=$("taskTitle").value.trim();if(!title){toast("Write a short task title first.");return}state.tasks.push({id:Date.now(),title,subject:$("taskSubject").value,date:$("taskDate").value,done:false});$("taskTitle").value="";$("taskDate").value="";saveState();renderTasks();toast("Task added to your planner.")};
-$("generatePlan").onclick=$("saveCoach").onclick=()=>{let goal=$("coachGoal").value,hours=Number($("coachHours").value),subject=$("coachSubject").value;state.coach={goal,hours,subject};state.goal=goal;saveState();let mins=Math.max(10,Math.round(hours*.45)),practice=Math.max(10,Math.round(hours*.35)),review=Math.max(5,hours-mins-practice);let steps=[[1,`Learn one ${subject} topic`,`${mins} minutes: read your notes, identify the main idea, and write a short summary in your own words.`],[2,"Active practice",`${practice} minutes: answer practice questions without checking the answer first. Mark anything uncertain for review.`],[3,"Review and plan",`${review} minutes: correct mistakes, note one question to ask, and choose the next topic for tomorrow.`]];$("coachPlan").innerHTML=steps.map(([n,t,p])=>`<div class="coach-item"><div class="coach-num">${n}</div><div><b>${t}</b><p>${p}</p></div></div>`).join("");$("coachGreeting").textContent="A realistic plan for "+goal.toLowerCase()+".";toast("Your personal study plan is ready.")};
-function tutorAnswer(text){let s=$("tutorSubject").value,level=$("tutorLevel").value,t=text.toLowerCase();if(t.includes("le chatelier")||t.includes("chemical equilibrium"))return "Chemical equilibrium is dynamic: the forward and reverse reactions continue at equal rates, so concentrations stay constant.\n\nLe Chatelier's principle: when a system at equilibrium is disturbed, it shifts in the direction that partly opposes the disturbance.\n• Add a reactant → equilibrium tends to use up some of that reactant.\n• Increase pressure for gases → equilibrium tends toward the side with fewer moles of gas (if the sides differ).\n• Increase temperature → favours the endothermic direction.\n\nA catalyst speeds up both directions equally; it does not change the equilibrium position. Try applying one change at a time to a balanced equation.";if(t.includes("photosynthesis"))return "Photosynthesis is how green plants use light energy to make food.\n\n1. Chlorophyll in chloroplasts absorbs light.\n2. Light energy is converted into chemical energy.\n3. The plant uses carbon dioxide from the air and water absorbed by roots to build carbohydrates.\n4. Oxygen is released.\n\nWord equation: carbon dioxide + water → glucose + oxygen (in light, with chlorophyll). Plants also respire; photosynthesis is not the same process as respiration.";if(t.includes("simultaneous")||t.includes("equation"))return "A reliable method for simultaneous equations is elimination.\n\nExample: x + y = 7 and x − y = 1.\n1. Add the equations: (x+y)+(x−y)=7+1.\n2. The y terms cancel, giving 2x=8.\n3. Divide by 2: x=4.\n4. Substitute into x+y=7: 4+y=7, so y=3.\n5. Check both answers in the original equations.\n\nSend your exact question if you want me to work through it with you.";if(t.includes("boyle"))return "Boyle's law says that for a fixed mass of gas at constant temperature, pressure is inversely proportional to volume: P₁V₁ = P₂V₂.\n\nIf volume halves, pressure doubles, provided temperature and amount of gas stay constant. Use consistent units and rearrange the equation before substituting values.";if(t.includes("cgpa")||t.includes("gpa"))return "CGPA is a credit-weighted average of grade points.\n\nFor each course: quality points = credit units × grade point.\nThen: GPA = total quality points ÷ total credit units.\nFor cumulative CGPA, include quality points and credits from all relevant semesters. Follow your institution's grading and retake rules.";if(t.includes("newton")||t.includes("force"))return "Newton's second law states that the resultant force equals mass multiplied by acceleration: F = ma.\n\nIn SI units, mass is in kilograms (kg), acceleration in metres per second squared (m/s²), and force in newtons (N). First identify the resultant force, then substitute the values and include the unit.";if(t.includes("study")||t.includes("remember")||t.includes("revision"))return "Try this revision loop:\n1. Pick one small topic and state what you want to understand.\n2. Study for 15–25 focused minutes.\n3. Close the notes and explain the idea from memory.\n4. Answer a few questions, then correct mistakes.\n5. Revisit the same idea after a day or two.\n\nIf you tell me your subject, topic, and available time, I can help shape a realistic session.";return `Let's work through your ${s} question at ${level} level.\n\nI can give a better explanation if you send the exact question or name the topic. Start by telling me:\n1. What concept or question are you working on?\n2. What part is confusing?\n3. What have you tried so far?\n\nI can help you break it into smaller steps. This built-in offline assistant has a limited set of prepared explanations; it is not connected to a live generative AI service.`}
-function sendChat(){let text=$("chatInput").value.trim();if(!text)return;addBubble(text,"user");$("chatInput").value="";setTimeout(()=>addBubble(tutorAnswer(text),"ai"),80)}
-function addBubble(text,kind){let b=document.createElement("div");b.className="bubble "+kind;b.textContent=text;$("chatWindow").appendChild(b);$("chatWindow").scrollTop=$("chatWindow").scrollHeight}
+$("generatePlan").onclick=$("saveCoach").onclick=()=>{let goal=$("coachGoal").value,hours=Number($("coachHours").value),subject=$("coachSubject").value;state.coach={goal,hours,subject};state.goal=goal;saveState();let mins=Math.max(10,Math.round(hours*.45)),practice=Math.max(10,Math.round(hours*.35)),review=Math.max(5,hours-mins-practice);let steps=[[1,`Learn one ${subject} topic`,`${mins} minutes: read your notes, identify the main idea, and write a short summary in your own words.`],[2,"Active practice",`${practice} minutes: answer practice questions without checking the answer first. Mark anything uncertain for review.`],[3,"Review and plan",`${review} minutes: correct mistakes, note one question to ask, and choose the next topic for tomorrow.`]];$("coachPlan").innerHTML=steps.map(([n,t,p])=>`<div class="coach-item"><div class="coach-num">${n}</div><div><b>${t}</b><p>${p}</p></div></div>`).join("");$("coachGreeting").textContent="A realistic plan for "+goal.toLowerCase()+".";toast("Your personal study plan is ready.")}
+
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const sendButton = document.getElementById("sendChat");
+  const message = input.value.trim();
+
+  if (!message || sendButton.disabled) return;
+
+  const subject = document.getElementById("tutorSubject").value;
+  const level = document.getElementById("tutorLevel").value;
+
+  addBubble(message, "user");
+  input.value = "";
+  sendButton.disabled = true;
+  sendButton.textContent = "Thinking…";
+
+  const loading = document.createElement("div");
+  loading.className = "bubble ai";
+  loading.textContent = "I'm thinking about that for you…";
+  loading.setAttribute("role", "status");
+  document.getElementById("chatWindow").appendChild(loading);
+  document.getElementById("chatWindow").scrollTop =
+    document.getElementById("chatWindow").scrollHeight;
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        subject,
+        level
+      })
+    });
+
+    const data = await response.json();
+    loading.remove();
+
+    if (!response.ok) {
+      throw new Error(data.error || "The AI service is unavailable.");
+    }
+
+    addBubble(
+      data.reply || "I couldn't form an answer. Please try again.",
+      "ai"
+    );
+  } catch (error) {
+    loading.remove();
+    addBubble(
+      "Sorry, I couldn't connect just now. Please check your internet " +
+      "connection and try again. Your study progress is still important!",
+      "ai"
+    );
+    console.error("Study assistant error:", error);
+  } finally {
+    sendButton.disabled = false;
+    sendButton.textContent = "Send ↑";
+    input.focus();
+  }
+}
+
+ function addBubble(text,kind){let b=document.createElement("div");b.className="bubble "+kind;b.textContent=text;$("chatWindow").appendChild(b);$("chatWindow").scrollTop=$("chatWindow").scrollHeight}
 $("sendChat").onclick=sendChat;$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat()});document.querySelectorAll("[data-prompt]").forEach(b=>b.onclick=()=>{$("chatInput").value=b.dataset.prompt;sendChat()});$("clearChat").onclick=()=>{$("chatWindow").innerHTML='<div class="bubble ai">Chat cleared. What would you like to understand today?</div>'};
 function exportBackup(){let data={app:"Smart CGPA",version:3,exportedAt:new Date().toISOString(),state};let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});let url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="smart-cgpa-backup.json";a.click();URL.revokeObjectURL(url);toast("Backup exported. Keep the file somewhere safe.")}
 $("exportData").onclick=exportBackup;$("exportProgress").onclick=exportBackup;$("importFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());let incoming=d.state||d;if(!incoming||typeof incoming!=="object"||!Array.isArray(incoming.courses)||!Array.isArray(incoming.tasks))throw Error("Invalid backup");if(confirm("Import this backup and replace the current local app data?")){state={...defaultState,...incoming};saveState();renderCourses();toast("Backup imported successfully.")}}catch(err){toast("Could not import that file. Choose a valid Smart CGPA JSON backup.")}e.target.value=""};
